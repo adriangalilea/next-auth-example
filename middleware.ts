@@ -1,11 +1,13 @@
-export { auth as middleware } from "auth"
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-// Or like this if you need to do something here.
-// export default auth((req) => {
-//   console.log(req.auth) //  { session: { user: { ... } } }
-// })
-
-// Read more: https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+export function middleware(request: NextRequest) {
+  // Custom logic for your middleware if needed
+  if (request.nextUrl.pathname === "/api/auth/verify-request") {
+    return NextResponse.redirect(new URL("/auth/verify-request", request.url));
+  }
 }
+
+export const config = {
+  matcher: ["/api/auth/verify-request", "/another-protected-route"],
+};
