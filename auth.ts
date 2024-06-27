@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 
-import { DgraphAdapter } from "@auth/dgraph-adapter";
+import { DgraphAdapter } from "./dgraph-adapter";
 
 const dgraphAdapter = DgraphAdapter({
   endpoint: process.env.AUTH_DGRAPH_GRAPHQL_ENDPOINT as string,
