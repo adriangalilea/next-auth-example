@@ -14,20 +14,28 @@
  *
  * @module @auth/dgraph-adapter
  */
-import { client as dgraphClient } from "./lib/client";
-import { isDate, type Adapter } from "@auth/core/adapters";
-import type { DgraphClientParams } from "./lib/client";
-import * as defaultFragments from "./lib/graphql/fragments";
+import { client as dgraphClient } from "./lib/client"
+import { isDate, type Adapter } from "@auth/core/adapters"
+import type { DgraphClientParams } from "./lib/client"
+import * as defaultFragments from "./lib/graphql/fragments"
 import {
   AdapterAccount,
   AdapterSession,
   AdapterUser,
   VerificationToken,
-} from "@auth/core/adapters";
+} from "@auth/core/adapters"
 
-export type { DgraphClientParams, DgraphClientError } from "./lib/client";
+export type { DgraphClientParams, DgraphClientError } from "./lib/client"
 
+/** This is the interface of the Dgraph adapter options. */
 export interface DgraphAdapterOptions {
+  /**
+   * The GraphQL {@link https://dgraph.io/docs/query-language/fragments/ Fragments} you can supply to the adapter
+   * to define how the shapes of the `user`, `account`, `session`, `verificationToken` entities look.
+   *
+   * By default the adapter will uses the [default defined fragments](https://github.com/nextauthjs/next-auth/blob/main/packages/adapter-dgraph/src/lib/graphql/fragments.ts)
+   * , this config option allows to extend them.
+   */
   fragments?: {
     User?: string
     Account?: string
@@ -45,7 +53,6 @@ export function DgraphAdapter(
   const fragments = { ...defaultFragments, ...options?.fragments }
   return {
     async createUser(input: AdapterUser) {
-      const { id, ...restInput } = input; // Exclude the ID from the input
       const result = await c.run<{ user: any[] }>(
         /* GraphQL */ `
           mutation ($input: [AddUserInput!]!) {
@@ -57,10 +64,10 @@ export function DgraphAdapter(
           }
           ${fragments.User}
         `,
-        { input: restInput }
-      );
+        { input }
+      )
 
-      return format.from<any>(result?.user[0]);
+      return format.from<any>(result?.user[0])
     },
     async getUser(id: string) {
       const result = await c.run<any>(
@@ -176,8 +183,10 @@ export function DgraphAdapter(
       return deletedUser
     },
 
-    async linkAccount(data: AdapterAccount) {
-      const { id, userId, ...input } = data; // Exclude the ID from the input
+    async  linkAccount(data: AdapterAccount) {
+      const { userId, ...input } = data;
+      const accountId = crypto.randomUUID()
+    
       await c.run<any>(
         /* GraphQL */ `
           mutation ($input: [AddAccountInput!]!) {
@@ -189,8 +198,9 @@ export function DgraphAdapter(
           }
           ${fragments.Account}
         `,
-        { input: { ...input, user: { id: userId } } }
+        { input: { id: accountId, ...input, user: { id: userId } } }
       );
+    
       return data;
     },
     async unlinkAccount(provider_providerAccountId: {
@@ -242,8 +252,8 @@ export function DgraphAdapter(
       }
     },
     async createSession(data: AdapterSession) {
-      const { userId, ...input } = data; // Exclude the ID from the input
-    
+      const { userId, ...input } = data
+
       await c.run<any>(
         /* GraphQL */ `
           mutation ($input: [AddSessionInput!]!) {
@@ -256,9 +266,9 @@ export function DgraphAdapter(
           ${fragments.Session}
         `,
         { input: { ...input, user: { id: userId } } }
-      );
-    
-      return data as any;
+      )
+
+      return data as any
     },
     async updateSession({ sessionToken, ...input }: { sessionToken: string }) {
       const result = await c.run<any>(
