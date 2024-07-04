@@ -46,7 +46,7 @@ export function DgraphAdapter(
   return {
     async createUser(input: AdapterUser) {
       // Exclude the ID from the input to let Dgraph handle ID generation
-      const { id, ...restInput } = input;
+      const { id, ...inputWithoutId } = input;
       const result = await c.run<{ user: any[] }>(
         /* GraphQL */ `
           mutation ($input: [AddUserInput!]!) {
@@ -58,7 +58,7 @@ export function DgraphAdapter(
           }
           ${fragments.User}
         `,
-        { input: restInput }
+        { input: inputWithoutId }
       );
 
       return format.from<any>(result?.user[0]);
@@ -179,7 +179,7 @@ export function DgraphAdapter(
 
     async linkAccount(data: AdapterAccount) {
       // Exclude the ID from the input to let Dgraph handle ID generation
-      const { id, userId, ...input } = data;
+      const { id, userId, ...inputWithoutId } = data;
       await c.run<any>(
         /* GraphQL */ `
           mutation ($input: [AddAccountInput!]!) {
@@ -191,7 +191,7 @@ export function DgraphAdapter(
           }
           ${fragments.Account}
         `,
-        { input: { ...input, user: { id: userId } } }
+        { input: { ...inputWithoutId, user: { id: userId } } }
       );
       return data;
     },
@@ -244,7 +244,6 @@ export function DgraphAdapter(
       }
     },
     async createSession(data: AdapterSession) {
-      // Exclude the ID from the input to let Dgraph handle ID generation
       const { userId, ...input } = data;
     
       await c.run<any>(
