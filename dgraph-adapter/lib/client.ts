@@ -31,9 +31,16 @@ export interface DgraphClientParams {
 
 export class DgraphClientError extends Error {
   name = "DgraphClientError";
+  query: string;
+  variables: any;
+  originalErrors: any[];
+
   constructor(errors: any[], query: string, variables: any) {
-    super(errors.map((error) => error.message).join("\n"));
-    console.error({ query, variables });
+    super(`GraphQL query failed with ${errors.length} errors.`);
+    this.originalErrors = errors;
+    this.query = query;
+    this.variables = variables;
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -58,7 +65,7 @@ export function client(params: DgraphClientParams) {
     "X-Auth-Token": authToken,
   };
 
-  if (authHeader && jwtSecret) {
+  if (jwtSecret) {
     headers[authHeader] = jwt.sign({ nextAuth: true }, jwtSecret, {
       algorithm: jwtAlgorithm,
     });
@@ -66,17 +73,27 @@ export function client(params: DgraphClientParams) {
 
   return {
     async run<T>(query: string, variables?: Record<string, any>): Promise<T | null> {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ query, variables }),
-      });
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ query, variables }),
+            });
 
-      const { data = {}, errors } = await response.json();
-      if (errors?.length) {
-        throw new DgraphClientError(errors, query, variables);
-      }
-      return Object.values(data)[0] as any;
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+            }
+
+            const { data = {}, errors } = await response.json();
+            if (errors?.length) {
+                throw new DgraphClientError(errors, query, variables);
+            }
+
+            return Object.values(data)[0] as T | null;
+        } catch (error) {
+            console.error(`Error executing GraphQL query: ${error}`, { query, variables });
+            throw error;
+        }
     },
-  };
+};
 }
