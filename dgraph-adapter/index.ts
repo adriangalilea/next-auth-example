@@ -14,9 +14,9 @@
  *
  * @module @auth/dgraph-adapter
  */
-import { client as dgraphClient } from "./lib/client.js"
-import type { DgraphClientParams } from "./lib/client.js"
-import * as defaultFragments from "./lib/graphql/fragments.js"
+import { client as dgraphClient } from "./lib/client"
+import type { DgraphClientParams } from "./lib/client"
+import * as defaultFragments from "./lib/graphql/fragments"
 import type {
   Adapter,
   AdapterAccount,
@@ -25,7 +25,7 @@ import type {
   VerificationToken,
 } from "@auth/core/adapters"
 
-export type { DgraphClientParams, DgraphClientError } from "./lib/client.js"
+export type { DgraphClientParams, DgraphClientError } from "./lib/client"
 
 /** This is the interface of the Dgraph adapter options. */
 export interface DgraphAdapterOptions {
